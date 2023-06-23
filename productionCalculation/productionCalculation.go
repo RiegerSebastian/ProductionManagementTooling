@@ -32,6 +32,12 @@ func ProductionTimeCalculationForAFullShift(usedTools []string, breakTimeInMinut
 	return ((8 * 60) - breakTimeInMinutes) / timeForOnePart, nil
 }
 
+func ElementUseForOneShift(usedTools []string, breakTimeInMinutes int) (int, int, int, error) {
+	amountElementsPerPartX, amountElementsPerPartY, amountElementsPerPartZ, _ := ProductionElementCalculation(usedTools)
+	productedPartsInOneShift, _ := ProductionTimeCalculationForAFullShift(usedTools, breakTimeInMinutes)
+	return amountElementsPerPartX * productedPartsInOneShift, amountElementsPerPartY * productedPartsInOneShift, amountElementsPerPartZ * productedPartsInOneShift, nil
+}
+
 // Given: Tool and amount to produce
 // Return: Time in days how long production needs
 func calculateProductionTimeForTool(tool string, amountOfParts int) (int, error) {
@@ -53,6 +59,20 @@ func getProductionTimeForEquipment(tool string) (int, bool, error) {
 	}
 	productionTimeInMinutes, ok := toolThroughputConfig[tool]
 	return productionTimeInMinutes, ok, nil
+}
+
+// Given: Tool
+// Return: Time need for one part in minutes
+func getElementUsageForEquipment(tool string) (int, int, int, bool, error) {
+	toolProductUseConfig := map[string][]int{
+		// Equipment: X, Y, Z
+		"EE": {2, 0, 0},
+		"EF": {1, 1, 0},
+		"EG": {0, 0, 2},
+		"EH": {2, 1, 1},
+	}
+	elementUse, ok := toolProductUseConfig[tool]
+	return elementUse[0], elementUse[1], elementUse[2], ok, nil
 }
 
 func getAmountOfEquipments(tool string) (int, bool, error) {
@@ -84,4 +104,18 @@ func getSumValue(values []int) int {
 	}
 
 	return sum
+}
+
+func ProductionElementCalculation(usedTools []string) (int, int, int, error) {
+	var totalElementX int
+	var totalElementY int
+	var totalElementZ int
+
+	for _, tool := range usedTools {
+		elementXForTool, elementYForTool, elementZForTool, _, _ := getElementUsageForEquipment(tool)
+		totalElementX = totalElementX + elementXForTool
+		totalElementY = totalElementY + elementYForTool
+		totalElementZ = totalElementZ + elementZForTool
+	}
+	return totalElementX, totalElementY, totalElementZ, nil
 }
