@@ -1,5 +1,11 @@
 package productionCalculation
 
+import (
+	"example.com/equipmentData"
+	"fmt"
+	"strconv"
+)
+
 func productionTimeCalculation(usedTools []string, productionAmount int) ([]int, error) {
 	var timeListForAllEquiptments []int
 
@@ -33,7 +39,7 @@ func ProductionTimeCalculationForAFullShift(usedTools []string, breakTimeInMinut
 }
 
 func ElementUseForOneShift(usedTools []string, breakTimeInMinutes int) (int, int, int, error) {
-	amountElementsPerPartX, amountElementsPerPartY, amountElementsPerPartZ, _ := ProductionElementCalculation(usedTools)
+	amountElementsPerPartX, amountElementsPerPartY, amountElementsPerPartZ, _ := ProductionResourceCalculation(usedTools)
 	productedPartsInOneShift, _ := ProductionTimeCalculationForAFullShift(usedTools, breakTimeInMinutes)
 	return amountElementsPerPartX * productedPartsInOneShift, amountElementsPerPartY * productedPartsInOneShift, amountElementsPerPartZ * productedPartsInOneShift, nil
 }
@@ -41,49 +47,11 @@ func ElementUseForOneShift(usedTools []string, breakTimeInMinutes int) (int, int
 // Given: Tool and amount to produce
 // Return: Time in days how long production needs
 func calculateProductionTimeForTool(tool string, amountOfParts int) (int, error) {
-	timeForOnePart, _, _ := getProductionTimeForEquipment(tool)
-	amountOfEquipments, _, _ := getAmountOfEquipments(tool)
+	timeForOnePart, _, _ := equipmentData.GetProductionTimeForEquipment(tool)
+	amountOfEquipments, _, _ := equipmentData.GetAmountOfEquipments(tool)
 	timeForGivenParts := (timeForOnePart / amountOfEquipments) * amountOfParts
 
 	return timeForGivenParts, nil
-}
-
-// Given: Tool
-// Return: Time need for one part in minutes
-func getProductionTimeForEquipment(tool string) (int, bool, error) {
-	toolThroughputConfig := map[string]int{
-		"EE": 3,
-		"EF": 12,
-		"EG": 1,
-		"EH": 2,
-	}
-	productionTimeInMinutes, ok := toolThroughputConfig[tool]
-	return productionTimeInMinutes, ok, nil
-}
-
-// Given: Tool
-// Return: Time need for one part in minutes
-func getElementUsageForEquipment(tool string) (int, int, int, bool, error) {
-	toolProductUseConfig := map[string][]int{
-		// Equipment: X, Y, Z
-		"EE": {2, 0, 0},
-		"EF": {1, 1, 0},
-		"EG": {0, 0, 2},
-		"EH": {2, 1, 1},
-	}
-	elementUse, ok := toolProductUseConfig[tool]
-	return elementUse[0], elementUse[1], elementUse[2], ok, nil
-}
-
-func getAmountOfEquipments(tool string) (int, bool, error) {
-	toolAmountConfig := map[string]int{
-		"EE": 1,
-		"EF": 3,
-		"EG": 1,
-		"EH": 1,
-	}
-	productionEquipmentsAmount, ok := toolAmountConfig[tool]
-	return productionEquipmentsAmount, ok, nil
 }
 
 func getMaxValue(values []int) int {
@@ -106,16 +74,42 @@ func getSumValue(values []int) int {
 	return sum
 }
 
-func ProductionElementCalculation(usedTools []string) (int, int, int, error) {
+func ProductionResourceCalculation(usedTools []string) (int, int, int, error) {
 	var totalElementX int
 	var totalElementY int
 	var totalElementZ int
 
 	for _, tool := range usedTools {
-		elementXForTool, elementYForTool, elementZForTool, _, _ := getElementUsageForEquipment(tool)
+		elementXForTool, elementYForTool, elementZForTool, _, _ := equipmentData.GetResourceUsageForEquipment(tool)
 		totalElementX = totalElementX + elementXForTool
 		totalElementY = totalElementY + elementYForTool
 		totalElementZ = totalElementZ + elementZForTool
 	}
 	return totalElementX, totalElementY, totalElementZ, nil
+}
+
+func MinimumProductionPerDayForOrder(orders map[string][]string) {
+	toolsForPA := []string{"EE", "EF", "EG", "EE"}
+	// toolsForPB := []string{"EH", "EF", "EG"}
+	// toolsForPC := []string{"EE", "EH", "EG"}
+
+	for _, order := range orders {
+		capacityForEquipmentForOrder(order, toolsForPA)
+	}
+}
+
+func ordersForProduct(orders map[string][]string, product string) {
+
+}
+
+// order: product, amount, time
+// toolsForProduct: list of tools to use
+func capacityForEquipmentForOrder(order []string, toolsForProduct []string) map[string]int {
+	toolsWithLoad := make(map[string]int)
+	amount, _ := strconv.Atoi(order[1])
+	for _, tool := range toolsForProduct {
+		toolsWithLoad[tool] = toolsWithLoad[tool] + amount
+	}
+	fmt.Println(toolsWithLoad)
+	return toolsWithLoad
 }
